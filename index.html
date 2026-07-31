@@ -14,6 +14,9 @@
             --text-muted: #64748b;
             --border-color: #e2e8f0;
             --accent-blue: #3b82f6;
+            --gold: #fbbf24;
+            --silver: #9ca3af;
+            --bronze: #b45309;
         }
 
         body {
@@ -68,6 +71,7 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            margin-bottom: 16px;
         }
 
         .metric {
@@ -88,7 +92,6 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
         }
 
         th, td {
@@ -107,11 +110,17 @@
             font-size: 13px;
         }
 
-        /* --- 開閉式プレイヤーリストのデザイン --- */
-        .player-details {
-            margin: 0;
+        /* プレイヤーアバター共通設定 */
+        .player-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            image-rendering: pixelated; /* マイクラのドット絵をくっきり表示 */
+            flex-shrink: 0;
         }
-        
+
+        /* プレイヤーリスト */
+        .player-details { margin: 0; }
         .player-details summary {
             cursor: pointer;
             color: var(--accent-blue);
@@ -122,96 +131,55 @@
             align-items: center;
             user-select: none;
         }
-        
-        .player-details summary::-webkit-details-marker {
-            display: none;
-        }
-        
+        .player-details summary::-webkit-details-marker { display: none; }
         .player-details summary::before {
             content: '';
             display: inline-block;
-            width: 0;
-            height: 0;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
+            width: 0; height: 0;
+            border-left: 4px solid transparent; border-right: 4px solid transparent;
             border-top: 6px solid var(--accent-blue);
             margin-right: 8px;
             transition: transform 0.2s ease;
         }
-        
-        .player-details[open] summary::before {
-            transform: rotate(-180deg);
-        }
+        .player-details[open] summary::before { transform: rotate(-180deg); }
 
         .player-list-vertical {
-            margin: 12px 0 0 0;
-            padding: 0;
+            margin: 12px 0 0 0; padding: 0;
             list-style-type: none;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+            display: flex; flex-direction: column; gap: 6px;
         }
-
-        /* アバター付きのプレイヤー項目 */
-        .player-item {
+        .player-list-vertical li {
             background-color: var(--bg-color);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            color: var(--text-main);
+            padding: 8px 12px; border-radius: 6px;
+            font-size: 13px; color: var(--text-main);
             border: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: flex; align-items: center; gap: 8px; /* アバターと名前の隙間 */
         }
 
-        .player-avatar {
-            width: 20px;
-            height: 20px;
-            border-radius: 3px;
-            image-rendering: pixelated; /* マイクラのドット絵を綺麗に表示 */
-        }
-
-        /* ランキング用のスタイル */
+        /* プレイ時間ランキング */
         .ranking-list {
-            margin: 10px 0 0 0;
-            padding: 0;
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            list-style: none; padding: 0; margin: 0;
+            display: flex; flex-direction: column; gap: 8px;
         }
-
         .ranking-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 14px;
-            background: var(--bg-color);
-            border-radius: 8px;
+            background-color: var(--bg-color);
+            padding: 10px 14px; border-radius: 8px;
             border: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 12px;
         }
-
-        .rank-number {
-            font-weight: 700;
-            font-size: 14px;
-            width: 24px;
+        .ranking-rank {
+            font-weight: 800; font-size: 16px;
+            width: 24px; text-align: center; color: var(--text-muted);
+        }
+        .ranking-rank.rank-1 { color: var(--gold); }
+        .ranking-rank.rank-2 { color: var(--silver); }
+        .ranking-rank.rank-3 { color: var(--bronze); }
+        
+        .ranking-name { font-weight: 600; font-size: 14px; }
+        .ranking-time {
+            margin-left: auto;
             color: var(--text-muted);
-        }
-
-        .rank-number.top-3 {
-            color: #eab308; /* 上位は少し目立たせる金系の色 */
-        }
-
-        .rank-name {
-            flex-grow: 1;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-
-        .rank-time {
-            font-size: 13px;
-            color: var(--text-muted);
-            font-weight: 600;
+            font-size: 13px; font-weight: 500;
         }
     </style>
 </head>
@@ -249,7 +217,7 @@
                     <tr>
                         <th>サーバー名</th>
                         <th>接続人数</th>
-                        <th>プレイヤー名</th>
+                        <th>プレイヤー一覧</th>
                     </tr>
                 </thead>
                 <tbody id="server-table-body">
@@ -258,10 +226,9 @@
         </div>
 
         <div class="card">
-            <h2>Playtime Ranking (Top 5)</h2>
-            <ul class="ranking-list" id="ranking-container">
-                <li class="no-players" style="padding: 10px 0;">オンラインのプレイヤーがいません</li>
-            </ul>
+            <h2>Top 5 Playtime (Current Session)</h2>
+            <ul class="ranking-list" id="playtime-ranking-list">
+                </ul>
         </div>
 
         <div class="card">
@@ -284,31 +251,31 @@
             const response = await fetch('./server-status.json?t=' + new Date().getTime());
             const data = await response.json();
 
+            // 最終更新時間
             const date = new Date(data.last_updated);
             document.getElementById('last-updated').innerText = `最終更新: ${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
             
+            // ヘッダー指標
             document.getElementById('total-players').innerHTML = `${data.total_players} <span>人</span>`;
             document.getElementById('ram-text').innerHTML = `${data.ram_used_mb} <span>/ ${data.ram_max_mb} MB</span>`;
 
             const serverNames = Object.keys(data.servers);
             const serverCounts = [];
-
             const tableBody = document.getElementById('server-table-body');
             tableBody.innerHTML = '';
             
+            // サーバー詳細リスト
             serverNames.forEach((name) => {
                 const serverData = data.servers[name];
                 const count = typeof serverData === 'object' ? serverData.count : serverData;
                 const players = typeof serverData === 'object' && serverData.players ? serverData.players : [];
-                
                 serverCounts.push(count);
 
-                // --- プレイヤーリストのHTML生成（アバター画像付き・開閉式・縦並び） ---
                 let playerHtml = `<span class="no-players">-</span>`;
                 if (count > 0) {
-                    // Minotar API を利用して顔グラフィック(20px)を取得
+                    // Minotar APIを利用してプレイヤーの顔アイコンを表示
                     const listItems = players.map(p => `
-                        <li class="player-item">
+                        <li>
                             <img class="player-avatar" src="https://minotar.net/avatar/${p}/20" alt="${p}">
                             <span>${p}</span>
                         </li>
@@ -329,35 +296,33 @@
                 tableBody.appendChild(tr);
             });
 
-            // --- プレイ時間ランキングの処理 ---
-            const rankingContainer = document.getElementById('ranking-container');
-            rankingContainer.innerHTML = '';
-
+            // プレイ時間ランキング処理
+            const rankingList = document.getElementById('playtime-ranking-list');
+            rankingList.innerHTML = '';
+            
             if (data.playtimes && Object.keys(data.playtimes).length > 0) {
-                // プレイ時間の長い順（降順）にソートして上位5名を取得
+                // オブジェクトを配列に変換し、時間(降順)でソート
                 const sortedPlayers = Object.entries(data.playtimes)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 5);
+                    .sort(([, timeA], [, timeB]) => timeB - timeA)
+                    .slice(0, 5); // 上位5人に絞る
 
                 sortedPlayers.forEach(([pName, pTime], index) => {
                     const rank = index + 1;
-                    const isTop3 = rank <= 3 ? 'top-3' : '';
-                    
                     const li = document.createElement('li');
                     li.className = 'ranking-item';
                     li.innerHTML = `
-                        <span class="rank-number ${isTop3}">#${rank}</span>
+                        <span class="ranking-rank rank-${rank}">#${rank}</span>
                         <img class="player-avatar" src="https://minotar.net/avatar/${pName}/24" alt="${pName}" style="width:24px; height:24px;">
-                        <span class="rank-name">${pName}</span>
-                        <span class="rank-time">${pTime} 分</span>
+                        <span class="ranking-name">${pName}</span>
+                        <span class="ranking-time">${pTime} 分</span>
                     `;
-                    rankingContainer.appendChild(li);
+                    rankingList.appendChild(li);
                 });
             } else {
-                rankingContainer.innerHTML = `<li class="no-players" style="padding: 10px 0;">オンラインのプレイヤーがいません</li>`;
+                rankingList.innerHTML = '<li class="no-players" style="padding: 10px 0;">現在ログインしているプレイヤーはいません。</li>';
             }
 
-            // --- グラフの描画処理（変更なし） ---
+            // サーバー別接続人数チャート
             const ctxServer = document.getElementById('serverChart').getContext('2d');
             if (serverChartInstance) serverChartInstance.destroy();
             serverChartInstance = new Chart(ctxServer, {
@@ -385,15 +350,12 @@
                         }
                     },
                     scales: { 
-                        y: { 
-                            beginAtZero: true, 
-                            suggestedMax: 10, 
-                            ticks: { stepSize: 1 } 
-                        } 
+                        y: { beginAtZero: true, suggestedMax: 10, ticks: { stepSize: 1 } } 
                     } 
                 }
             });
 
+            // RAMチャート
             const freeRam = data.ram_max_mb - data.ram_used_mb;
             const ctxRam = document.getElementById('ramChart').getContext('2d');
             if (ramChartInstance) ramChartInstance.destroy();
@@ -428,8 +390,9 @@
         }
     }
 
+    // 初回実行
     fetchAndUpdateData();
-    // 60秒(60000)から10秒(10000)おきにデータ取得するように変更
+    // 60秒から「10秒」に更新間隔を変更
     setInterval(fetchAndUpdateData, 10000);
 </script>
 </body>
