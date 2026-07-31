@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マイクラサーバー ステータス</title>
+    <!-- グラフを描画するためのライブラリ (Chart.js) を読み込む -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; text-align: center; }
+        .dashboard { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; width: 350px; }
+        .status-header { background: #2c3e50; color: white; padding: 20px; border-radius: 0 0 15px 15px; margin-top: 0; }
+        .number-large { font-size: 3em; font-weight: bold; color: #27ae60; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <h1 class="status-header">📡 サーバー リアルタイム状況</h1>
+    
+    <p>最終更新: <strong id="last-updated">読み込み中...</strong></p>
+
+    <div class="dashboard">
+        <!-- 総合情報カード -->
+        <div class="card">
+            <h2>現在の総プレイヤー数</h2>
+            <div class="number-large" id="total-players">-</div>
+            <p>人</p>
+        </div>
+
+        <!-- サーバー別グラフカード -->
+        <div class="card">
+            <h2>サーバー別 プレイヤー数</h2>
+            <canvas id="serverChart"></canvas>
+        </div>
+
+        <!-- メモリ(RAM)グラフカード -->
+        <div class="card">
+            <h2>プロキシ メモリ使用状況</h2>
+            <canvas id="ramChart"></canvas>
+            <p style="font-size: 0.9em; color: gray;" id="ram-text"></p>
+        </div>
+    </div>
+
+    <script>
+        // グラフの変数
+        let serverChartInstance = null;
+        let ramChartInstance = null;
+
+        // JSONデータを取得して画面を更新する関数
+        async function fetchAndUpdateData() {
+            try {
+                // キャッシュ(古いデータ)を読み込まないように、URLの末尾に現在の時間をくっつける
+                const response = await fetch('./server-status.json?t=' + new Date().getTime());
+                const data = await response.json();
+
+                // 1. テキスト情報の更新
+                const date = new Date(data.last_updated);
+                document.getElementById('last-updated').innerText = date.toLocaleString('ja-JP');
+                document.getElementById('total-players').innerText = data.total_players;
+                document.getElementById('ram-text').innerText = `使用中: ${data.ram_used_mb}MB / 最大: ${data.ram_max_mb}MB`;
+
+                // 2. サーバー別プレイヤー数の棒グラフを描画
+                const serverNames = Object.keys(data.servers);
+                const serverPlayers = Object.values(data.servers);
+                
+                const ctxServer = document.getElementById('serverChart').getContext('2d');
+                if (serverChartInstance) serverChartInstance.destroy(); // 古いグラフを消す
+                serverChartInstance = new Chart(ctxServer, {
+                    type: 'bar',
+                    data: {
+                        labels: serverNames,
+                        datasets: [{
+                            label: 'プレイヤー数',
+                            data: serverPlayers,
+                            backgroundColor: '#3498db'
+                        }]
+                    },
+                    options: { scales: { y: { beginAtZero: true, suggestedMax: 10, ticks: { stepSize: 1 } } } }
+                });
+
+                // 3. メモリ(RAM)の円グラフを描画
+                const freeRam = data.ram_max_mb - data.ram_used_mb;
+                const ctxRam = document.getElementById('ramChart').getContext('2d');
+                if (ramChartInstance) ramChartInstance.destroy();
+                ramChartInstance = new Chart(ctxRam, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['使用中 (MB)', '空き (MB)'],
+                        datasets: [{
+                            data: [data.ram_used_mb, freeRam],
+                            backgroundColor: ['#e74c3c', '#2ecc71']
+                        }]
+                    }
+                });
+
+            } catch (error) {
+                console.error("データの読み込みに失敗しました:", error);
+                document.getElementById('last-updated').innerText = "取得エラー (更新待ち...)";
+            }
+        }
+
+        // ページを開いたときに実行
+        fetchAndUpdateData();
+        // その後、1分(60000ミリ秒)ごとに自動でリロード
+        setInterval(fetchAndUpdateData, 60000);
+    </script>
+</body>
+</html>
