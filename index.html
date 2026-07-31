@@ -95,7 +95,7 @@
             text-align: left;
             padding: 12px 16px;
             border-bottom: 1px solid var(--border-color);
-            vertical-align: top; /* 文字を上揃えにする */
+            vertical-align: top;
         }
 
         th { color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase; }
@@ -117,17 +117,16 @@
             color: var(--accent-blue);
             font-size: 14px;
             font-weight: 600;
-            list-style: none; /* ブラウザ標準のアイコンを消す */
+            list-style: none;
             display: inline-flex;
             align-items: center;
             user-select: none;
         }
         
         .player-details summary::-webkit-details-marker {
-            display: none; /* Safariの標準アイコンも消す */
+            display: none;
         }
         
-        /* CSSで描画する非絵文字の三角形 */
         .player-details summary::before {
             content: '';
             display: inline-block;
@@ -135,17 +134,15 @@
             height: 0;
             border-left: 4px solid transparent;
             border-right: 4px solid transparent;
-            border-top: 6px solid var(--accent-blue); /* 下向きの三角形 */
+            border-top: 6px solid var(--accent-blue);
             margin-right: 8px;
-            transition: transform 0.2s ease; /* アニメーション追加 */
+            transition: transform 0.2s ease;
         }
         
-        /* 開いた時に三角形を上向きに回転させる */
         .player-details[open] summary::before {
             transform: rotate(-180deg);
         }
 
-        /* 縦並びのリストデザイン */
         .player-list-vertical {
             margin: 12px 0 0 0;
             padding: 0;
@@ -155,13 +152,66 @@
             gap: 6px;
         }
 
-        .player-list-vertical li {
+        /* アバター付きのプレイヤー項目 */
+        .player-item {
             background-color: var(--bg-color);
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 13px;
             color: var(--text-main);
             border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            image-rendering: pixelated; /* マイクラのドット絵を綺麗に表示 */
+        }
+
+        /* ランキング用のスタイル */
+        .ranking-list {
+            margin: 10px 0 0 0;
+            padding: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .rank-number {
+            font-weight: 700;
+            font-size: 14px;
+            width: 24px;
+            color: var(--text-muted);
+        }
+
+        .rank-number.top-3 {
+            color: #eab308; /* 上位は少し目立たせる金系の色 */
+        }
+
+        .rank-name {
+            flex-grow: 1;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .rank-time {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
         }
     </style>
 </head>
@@ -203,9 +253,15 @@
                     </tr>
                 </thead>
                 <tbody id="server-table-body">
-                    <!-- JavaScriptで自動生成 -->
-                </tbody>
+                    </tbody>
             </table>
+        </div>
+
+        <div class="card">
+            <h2>Playtime Ranking (Top 5)</h2>
+            <ul class="ranking-list" id="ranking-container">
+                <li class="no-players" style="padding: 10px 0;">オンラインのプレイヤーがいません</li>
+            </ul>
         </div>
 
         <div class="card">
@@ -247,11 +303,16 @@
                 
                 serverCounts.push(count);
 
-                // --- プレイヤーリストのHTML生成（開閉式・縦並び） ---
+                // --- プレイヤーリストのHTML生成（アバター画像付き・開閉式・縦並び） ---
                 let playerHtml = `<span class="no-players">-</span>`;
                 if (count > 0) {
-                    // 配列から<li>タグのリストを生成
-                    const listItems = players.map(p => `<li>${p}</li>`).join('');
+                    // Minotar API を利用して顔グラフィック(20px)を取得
+                    const listItems = players.map(p => `
+                        <li class="player-item">
+                            <img class="player-avatar" src="https://minotar.net/avatar/${p}/20" alt="${p}">
+                            <span>${p}</span>
+                        </li>
+                    `).join('');
                     
                     playerHtml = `
                         <details class="player-details">
@@ -268,6 +329,35 @@
                 tableBody.appendChild(tr);
             });
 
+            // --- プレイ時間ランキングの処理 ---
+            const rankingContainer = document.getElementById('ranking-container');
+            rankingContainer.innerHTML = '';
+
+            if (data.playtimes && Object.keys(data.playtimes).length > 0) {
+                // プレイ時間の長い順（降順）にソートして上位5名を取得
+                const sortedPlayers = Object.entries(data.playtimes)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+
+                sortedPlayers.forEach(([pName, pTime], index) => {
+                    const rank = index + 1;
+                    const isTop3 = rank <= 3 ? 'top-3' : '';
+                    
+                    const li = document.createElement('li');
+                    li.className = 'ranking-item';
+                    li.innerHTML = `
+                        <span class="rank-number ${isTop3}">#${rank}</span>
+                        <img class="player-avatar" src="https://minotar.net/avatar/${pName}/24" alt="${pName}" style="width:24px; height:24px;">
+                        <span class="rank-name">${pName}</span>
+                        <span class="rank-time">${pTime} 分</span>
+                    `;
+                    rankingContainer.appendChild(li);
+                });
+            } else {
+                rankingContainer.innerHTML = `<li class="no-players" style="padding: 10px 0;">オンラインのプレイヤーがいません</li>`;
+            }
+
+            // --- グラフの描画処理（変更なし） ---
             const ctxServer = document.getElementById('serverChart').getContext('2d');
             if (serverChartInstance) serverChartInstance.destroy();
             serverChartInstance = new Chart(ctxServer, {
@@ -339,7 +429,8 @@
     }
 
     fetchAndUpdateData();
-    setInterval(fetchAndUpdateData, 60000);
+    // 60秒(60000)から10秒(10000)おきにデータ取得するように変更
+    setInterval(fetchAndUpdateData, 10000);
 </script>
 </body>
 </html>
