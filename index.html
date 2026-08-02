@@ -14,6 +14,7 @@
             --text-muted: #64748b;
             --border-color: #e2e8f0;
             --accent-blue: #3b82f6;
+            --accent-red: #ef4444; /* YouTube用のアクセントカラー */
             --gold: #fbbf24;
             --silver: #9ca3af;
             --bronze: #b45309;
@@ -82,6 +83,7 @@
         }
 
         .metric span { font-size: 16px; font-weight: 400; color: var(--text-muted); }
+        .youtube-color { color: var(--accent-red); }
 
         .chart-container {
             position: relative;
@@ -115,7 +117,7 @@
             width: 20px;
             height: 20px;
             border-radius: 4px;
-            image-rendering: pixelated; /* マイクラのドット絵をくっきり表示 */
+            image-rendering: pixelated;
             flex-shrink: 0;
         }
 
@@ -153,7 +155,7 @@
             padding: 8px 12px; border-radius: 6px;
             font-size: 13px; color: var(--text-main);
             border: 1px solid var(--border-color);
-            display: flex; align-items: center; gap: 8px; /* アバターと名前の隙間 */
+            display: flex; align-items: center; gap: 8px;
         }
 
         /* プレイ時間ランキング */
@@ -191,10 +193,15 @@
         <div class="update-time" id="last-updated">最終更新: 読み込み中...</div>
     </div>
 
+    <!-- 上部のカード群（ここにYouTubeを追加） -->
     <div class="grid-row-top">
         <div class="card">
             <h2>Total Players</h2>
             <div class="metric" id="total-players">- <span>人</span></div>
+        </div>
+        <div class="card">
+            <h2>YouTube Subscribers</h2>
+            <div class="metric youtube-color" id="youtube-sub-count">- <span>人</span></div>
         </div>
         <div class="card">
             <h2>Memory Usage</h2>
@@ -246,6 +253,31 @@
     let serverChartInstance = null;
     let ramChartInstance = null;
 
+    // ===== YouTube API 設定 =====
+    const YOUTUBE_API_KEY = 'AIzaSyDPaAZ8OEVK3kRj8ixuJjGAE3ay7BvjXSU';
+    const YOUTUBE_CHANNEL_ID = 'UCh-96GfwkBZGYwPxwq0yW2g'; 
+    const YOUTUBE_API_URL = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${YOUTUBE_CHANNEL_ID}&key=${YOUTUBE_API_KEY}`;
+
+    // YouTubeデータの取得関数
+    async function fetchYouTubeStats() {
+        try {
+            const response = await fetch(YOUTUBE_API_URL);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+
+            if (data.items && data.items.length > 0) {
+                const stats = data.items[0].statistics;
+                document.getElementById('youtube-sub-count').innerHTML = `${Number(stats.subscriberCount).toLocaleString()} <span>人</span>`;
+            } else {
+                document.getElementById('youtube-sub-count').innerHTML = `エラー <span>-</span>`;
+            }
+        } catch (error) {
+            console.error('YouTube Data fetch error:', error);
+            document.getElementById('youtube-sub-count').innerHTML = `エラー <span>-</span>`;
+        }
+    }
+
+    // マイクラサーバーデータの取得関数
     async function fetchAndUpdateData() {
         try {
             const response = await fetch('./server-status.json?t=' + new Date().getTime());
@@ -273,7 +305,6 @@
 
                 let playerHtml = `<span class="no-players">-</span>`;
                 if (count > 0) {
-                    // Minotar APIを利用してプレイヤーの顔アイコンを表示
                     const listItems = players.map(p => `
                         <li>
                             <img class="player-avatar" src="https://minotar.net/avatar/${p}/20" alt="${p}">
@@ -301,10 +332,9 @@
             rankingList.innerHTML = '';
             
             if (data.playtimes && Object.keys(data.playtimes).length > 0) {
-                // オブジェクトを配列に変換し、時間(降順)でソート
                 const sortedPlayers = Object.entries(data.playtimes)
                     .sort(([, timeA], [, timeB]) => timeB - timeA)
-                    .slice(0, 5); // 上位5人に絞る
+                    .slice(0, 5);
 
                 sortedPlayers.forEach(([pName, pTime], index) => {
                     const rank = index + 1;
@@ -392,8 +422,11 @@
 
     // 初回実行
     fetchAndUpdateData();
-    // 60秒から「10秒」に更新間隔を変更
-    setInterval(fetchAndUpdateData, 10000);
+    fetchYouTubeStats();
+    
+    // 定期更新（別々の間隔で実行）
+    setInterval(fetchAndUpdateData, 10000); // マイクラサーバーは10秒ごと
+    setInterval(fetchYouTubeStats, 60000);  // YouTube APIは60秒ごと
 </script>
 </body>
 </html>
