@@ -9,6 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     
+    <!-- アイコン用ライブラリ (Font Awesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- 数字の縦スクロールアニメーション用ライブラリ (Odometer) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-minimal.min.css" />
     <script>
@@ -47,7 +50,7 @@
             margin: 0 auto;
         }
 
-        /* ヘッダー周りのデザイン改善 */
+        /* ヘッダー周りのデザイン */
         .header {
             display: flex;
             justify-content: space-between;
@@ -62,7 +65,10 @@
             color: var(--text-main); 
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+        }
+        .header h1 i {
+            color: var(--accent-blue);
         }
         .header .update-time { 
             color: var(--text-muted); 
@@ -86,7 +92,7 @@
             gap: 20px;
         }
 
-        /* カードデザインの洗練 */
+        /* カードデザイン */
         .card {
             background: var(--card-bg);
             border-radius: 16px;
@@ -109,6 +115,18 @@
             justify-content: space-between;
             margin-bottom: 16px;
         }
+        
+        .card h2 .title-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card h2 i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
 
         /* 指標（数字）周りのデザイン */
         .metric {
@@ -126,6 +144,7 @@
             color: var(--text-muted); 
         }
         .youtube-color { color: var(--accent-red); }
+        .youtube-icon { color: var(--accent-red); }
 
         /* リンクボタン */
         .channel-link {
@@ -136,6 +155,9 @@
             border-radius: 12px;
             text-decoration: none;
             transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         .channel-link:hover {
             background: #fecaca;
@@ -171,6 +193,7 @@
             border-radius: 4px;
             image-rendering: pixelated;
             flex-shrink: 0;
+            background-color: #e2e8f0; /* 画像読み込み前の背景色 */
         }
 
         /* 折りたたみリスト */
@@ -191,8 +214,10 @@
         .player-details summary:hover { background: #eff6ff; }
         .player-details summary::-webkit-details-marker { display: none; }
         .player-details summary::before {
-            content: '▶';
-            font-size: 10px;
+            content: '\f0da'; /* FontAwesomeの右矢印 */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 12px;
             margin-right: 8px;
             transition: transform 0.2s ease;
         }
@@ -243,16 +268,17 @@
 
 <div class="container">
     <div class="header">
-        <h1>📊 村鯖smp ダッシュボード</h1>
+        <h1><i class="fa-solid fa-server"></i> 村鯖smp ダッシュボード</h1>
         <div class="update-time" id="last-updated">最終更新: 読み込み中...</div>
     </div>
 
     <!-- 上部のカード群 -->
     <div class="grid-row-top">
         <div class="card">
-            <h2>🎮 サーバー合計プレイヤー数</h2>
+            <h2>
+                <span class="title-left"><i class="fa-solid fa-users"></i> サーバー合計プレイヤー数</span>
+            </h2>
             <div class="metric">
-                <!-- Odometerクラスをつけることで縦スクロールになる -->
                 <span id="total-players" class="odometer">0</span>
                 <span class="unit">人</span>
             </div>
@@ -260,8 +286,10 @@
         
         <div class="card">
             <h2>
-                📺 YouTube登録者数
-                <a href="https://www.youtube.com/@village-smp" target="_blank" class="channel-link">チャンネルへ 🔗</a>
+                <span class="title-left"><i class="fa-brands fa-youtube youtube-icon"></i> YouTube登録者数</span>
+                <a href="https://www.youtube.com/@village-smp" target="_blank" class="channel-link">
+                    <span>チャンネルへ</span> <i class="fa-solid fa-up-right-from-square" style="font-size: 10px; width: auto;"></i>
+                </a>
             </h2>
             <div class="metric youtube-color">
                 <span id="youtube-sub-count" class="odometer">0</span>
@@ -270,7 +298,9 @@
         </div>
 
         <div class="card">
-            <h2>💾 全体メモリ使用量</h2>
+            <h2>
+                <span class="title-left"><i class="fa-solid fa-memory"></i> 全体メモリ使用量</span>
+            </h2>
             <div class="metric">
                 <span id="ram-used" class="odometer">0</span>
                 <span class="unit">/ <span id="ram-max">0</span> MB</span>
@@ -280,14 +310,14 @@
 
     <div class="grid-row-main">
         <div class="card">
-            <h2>🌍 サーバー別 接続人数</h2>
+            <h2><span class="title-left"><i class="fa-solid fa-chart-bar"></i> サーバー別 接続人数</span></h2>
             <div class="chart-container">
                 <canvas id="serverChart"></canvas>
             </div>
         </div>
 
         <div class="card">
-            <h2>📋 サーバー詳細 ＆ プレイヤー一覧</h2>
+            <h2><span class="title-left"><i class="fa-solid fa-list-ul"></i> サーバー詳細 ＆ プレイヤー一覧</span></h2>
             <table>
                 <thead>
                     <tr>
@@ -302,13 +332,13 @@
         </div>
 
         <div class="card">
-            <h2>🏆 プレイ時間トップ 5 (現在のセッション)</h2>
+            <h2><span class="title-left"><i class="fa-solid fa-trophy"></i> プレイ時間トップ 5 (現在のセッション)</span></h2>
             <ul class="ranking-list" id="playtime-ranking-list">
                 </ul>
         </div>
 
         <div class="card">
-            <h2>⚙️ プロキシ メモリ割り当て</h2>
+            <h2><span class="title-left"><i class="fa-solid fa-microchip"></i> プロキシ メモリ割り当て</span></h2>
             <div class="chart-container">
                 <canvas id="ramChart"></canvas>
             </div>
@@ -327,7 +357,9 @@
     const YOUTUBE_CHANNEL_ID = 'UCh-96GfwkBZGYwPxwq0yW2g'; 
     const YOUTUBE_API_URL = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${YOUTUBE_CHANNEL_ID}&key=${YOUTUBE_API_KEY}`;
 
-    // YouTubeデータの取得関数
+    // デフォルトスティーブのアイコンURL (エラー時のフォールバック用)
+    const DEFAULT_AVATAR_URL = 'https://minotar.net/avatar/MHF_Steve';
+
     async function fetchYouTubeStats() {
         try {
             const response = await fetch(YOUTUBE_API_URL);
@@ -336,7 +368,6 @@
 
             if (data.items && data.items.length > 0) {
                 const stats = data.items[0].statistics;
-                // innerHTMLに数字を入れるだけでOdometerが自動で縦スクロールアニメーションを実行します
                 document.getElementById('youtube-sub-count').innerHTML = stats.subscriberCount;
             } else {
                 console.warn('YouTube channel not found.');
@@ -346,27 +377,23 @@
         }
     }
 
-    // マイクラサーバーデータの取得関数
     async function fetchAndUpdateData() {
         try {
             const response = await fetch('./server-status.json?t=' + new Date().getTime());
             const data = await response.json();
 
-            // 最終更新時間
             const date = new Date(data.last_updated);
             document.getElementById('last-updated').innerText = `最終更新: ${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
             
-            // ヘッダー指標（Odometerによるアニメーション）
             document.getElementById('total-players').innerHTML = data.total_players;
             document.getElementById('ram-used').innerHTML = data.ram_used_mb;
-            document.getElementById('ram-max').innerHTML = data.ram_max_mb; // 最大値は固定であればアニメーションしません
+            document.getElementById('ram-max').innerHTML = data.ram_max_mb; 
 
             const serverNames = Object.keys(data.servers);
             const serverCounts = [];
             const tableBody = document.getElementById('server-table-body');
             tableBody.innerHTML = '';
             
-            // サーバー詳細リスト
             serverNames.forEach((name) => {
                 const serverData = data.servers[name];
                 const count = typeof serverData === 'object' ? serverData.count : serverData;
@@ -375,9 +402,10 @@
 
                 let playerHtml = `<span class="no-players">オフライン / 誰もいません</span>`;
                 if (count > 0) {
+                    // onerrorで画像読み込み失敗時にデフォルトアイコンに切り替える処理を追加
                     const listItems = players.map(p => `
                         <li>
-                            <img class="player-avatar" src="https://minotar.net/avatar/${p}/24" alt="${p}">
+                            <img class="player-avatar" src="https://minotar.net/avatar/${p}/24" onerror="this.onerror=null; this.src='${DEFAULT_AVATAR_URL}/24';" alt="${p}">
                             <span>${p}</span>
                         </li>
                     `).join('');
@@ -397,7 +425,6 @@
                 tableBody.appendChild(tr);
             });
 
-            // プレイ時間ランキング処理
             const rankingList = document.getElementById('playtime-ranking-list');
             rankingList.innerHTML = '';
             
@@ -412,7 +439,7 @@
                     li.className = 'ranking-item';
                     li.innerHTML = `
                         <span class="ranking-rank rank-${rank}">#${rank}</span>
-                        <img class="player-avatar" src="https://minotar.net/avatar/${pName}/32" alt="${pName}" style="width:32px; height:32px; border-radius:6px;">
+                        <img class="player-avatar" src="https://minotar.net/avatar/${pName}/32" onerror="this.onerror=null; this.src='${DEFAULT_AVATAR_URL}/32';" alt="${pName}" style="width:32px; height:32px; border-radius:6px;">
                         <span class="ranking-name">${pName}</span>
                         <span class="ranking-time">${pTime} 分</span>
                     `;
@@ -422,7 +449,6 @@
                 rankingList.innerHTML = '<li class="no-players" style="padding: 10px 0;">現在ログインしているプレイヤーはいません。</li>';
             }
 
-            // サーバー別接続人数チャート
             const ctxServer = document.getElementById('serverChart').getContext('2d');
             if (serverChartInstance) serverChartInstance.destroy();
             serverChartInstance = new Chart(ctxServer, {
@@ -455,7 +481,6 @@
                 }
             });
 
-            // RAMチャート
             const freeRam = data.ram_max_mb - data.ram_used_mb;
             const ctxRam = document.getElementById('ramChart').getContext('2d');
             if (ramChartInstance) ramChartInstance.destroy();
@@ -491,13 +516,11 @@
         }
     }
 
-    // 初回実行
     fetchAndUpdateData();
     fetchYouTubeStats();
     
-    // 定期更新（両方とも60秒ごとに統一）
-    setInterval(fetchAndUpdateData, 60000); // マイクラサーバー: 60秒
-    setInterval(fetchYouTubeStats, 60000);  // YouTube API: 60秒
+    setInterval(fetchAndUpdateData, 60000); 
+    setInterval(fetchYouTubeStats, 60000); 
 </script>
 </body>
 </html>
