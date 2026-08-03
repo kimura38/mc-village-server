@@ -1,1 +1,1 @@
-{"total_players":1,"ram_used_mb":152,"ram_max_mb":1024,"servers":{"lobby":{"count":0,"players":[]},"survival":{"count":0,"players":[]},"pvp":{"count":0,"players":[]},"survival2":{"count":0,"players":[]}},"playtimes":{"cakenanoda":0},"last_updated":1785776018199}
+{"total_players":2,"ram_used_mb":185,"ram_max_mb":1024,"servers":{"lobby":{"count":1,"players":["s3_q3x"]},"survival":{"count":1,"players":["cakenanoda"]},"pvp":{"count":0,"players":[]},"survival2":{"count":0,"players":[]}},"playtimes":{"cakenanoda":1,"s3_q3x":0},"last_updated":1785776078200}
